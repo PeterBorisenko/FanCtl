@@ -55,17 +55,21 @@ init:
 	; ADC
 	ldi		R16,		0b10
 	out		ADMUX,		R16
-	ldi		R16,		(1 << ADEN)|(0b100 << ADPS0)
+	ldi		R16,		(1 << ADEN)|(0b100 << ADPS0)|(1 << ADIE)
 	out		ADCSRA,		R16
-	;sbi	SMCR,		(1 << SM0)						;	Sleep mode is ADC noise reduction
+	ldi		R16,		(1 << SM0)
+	out		SMCR,		R16						;	Sleep mode is ADC noise reduction
 
+	sei
 
 set_Speed:
 	out		OCR0BL,		Scur
 
 measure_Start:
 	sbi		ADCSRA,		ADSC
-	;sbi		SMCR,		SE
+	in		R16,		SMCR
+	andi	R16,		(1 << SE)
+	out		SMCR,		R16
 	sleep
 
 waitForResult:
@@ -75,9 +79,11 @@ waitForResult:
 	;; in		ADCresult,	ADCL -- optimised
 
 wake:
-	;cbi	SMCR,		SE
-	in		ADCresult,	ADCL	
-	;sbi	SMCR,		(1 << SE)
+	sbi		ADCSRA,		ADIF
+	in		R16,		SMCR
+	cbr		R16,		SE
+	out		SMCR,		R16
+	in		ADCresult,	ADCL
 	;; rjmp	calculation -- optimised
 
 calculation:
