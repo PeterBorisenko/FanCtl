@@ -23,7 +23,7 @@
 .CSEG
 
 ;=====================================	CONSTANTS
-	.equ		Smin=	0		
+	.equ		Smin=	10		
 	.equ		Smax=	240		
 	.equ		Step=	0x0F
 								;;	ADC values with thermistor NTCLG100E2104/104, R4= 10K
@@ -44,7 +44,7 @@ init:
 	ldi		R16,		(RAMEND >> 8)&0xFF
 	out		SPH,		R16
 	; I/O Ports
-	sbi		DDRB,		Fan							;	PWM - PB1 - is output
+	sbi		DDRB,		Fan								;	PWM - PB1 - is output
 	sbi		DDRB,		Load							;	PB0	-	is output
 	cbi		DDRB,		Thrm							;	ADC2 - is input
 	; Timer
@@ -52,6 +52,7 @@ init:
 	out		TCCR0A,		R16
 	ldi		R16,		(0b001 << CS00)|(0b01 << WGM02)
 	out		TCCR0B,		R16
+	ldi		Scur,		Smin
 	; ADC
 	ldi		R16,		0b10
 	out		ADMUX,		R16
@@ -68,9 +69,10 @@ set_Speed:
 measure_Start:
 	sbi		ADCSRA,		ADSC
 	in		R16,		SMCR
-	andi	R16,		(1 << SE)
+	ori		R16,		(1 << SE)
 	out		SMCR,		R16
 	sleep
+	nop						; waiting for sleep
 
 waitForResult:
 	in		R16,		ADCSRA
