@@ -81,8 +81,8 @@ get_Result:
 	;; rjmp	calculation -- optimised
 
 calculation:
-	mov		Tcur,		Tprev
-	mov		ADCresult,	Tcur
+	mov		Tprev,		Tcur
+	mov		Tcur,		ADCresult
 	sbrc	Stat,		0x01
 	rjmp	comprasion_2
 	;; rjmp		comprasion_1 -- optimised
@@ -137,4 +137,3 @@ OVERHEAT:
 	cbi		PORTB, Load
 	rjmp	measure_Start
 
-.org	0x0000
