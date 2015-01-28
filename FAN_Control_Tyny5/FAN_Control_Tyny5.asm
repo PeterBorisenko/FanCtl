@@ -12,9 +12,9 @@
 	.def		Tprev=		R19
 	.def		Scur=		R20
 	.def		Stat=		R21
-	.def		Load=		PINB0
-	.def		Fan=		PINB1
-	.def		Thrm=		PINB2
+	.equ		Load=		PINB0
+	.equ		Fan=		PINB1
+	.equ		Thrm=		PINB2
 
 .DSEG
 
@@ -26,7 +26,7 @@
 	.equ		Smin=	0		
 	.equ		Smax=	240		
 	.equ		Step=	0x0F
-								;;	ADC values with thermistor NTCLG100E2104/104, R2= 10K
+								;;	ADC values with thermistor NTCLG100E2104/104, R4= 10K
 	.equ		Tmin=	40		;; ADC value at t= 40C
 	.equ		Tmax=	152		;; ADC value at t= 100C
 
@@ -65,7 +65,7 @@ set_Speed:
 
 measure_Start:
 	sbi		ADCSRA,		ADSC
-	sbi		SMCR,		SE
+	;sbi		SMCR,		SE
 	sleep
 
 waitForResult:
@@ -102,7 +102,7 @@ comprasion_2:
 	;; if >
 	; rjmp		test_Smax
 	mov		R16,		Tprev
-	cpi		R16,		Tcur
+	cp		R16,		Tcur
 	;; if >
 	; rjmp		speed_Down
 	;; else
@@ -121,7 +121,7 @@ test_Smax:
 	
 speed_Up:
 	ldi		Stat,		0x01
-	mov		R16,		Step
+	ldi		R16,		Step
 	add		Scur,		R16
 	rjmp	set_Speed
 
