@@ -50,12 +50,10 @@ init:
 	sbi		DDRB,		Load							;	PB0	-	is output
 	cbi		DDRB,		Thrm							;	ADC2 - is input
 	; Timer
-	ldi		R16,		(0b01 << WGM00)					;	WGM3:0	=	0x05	- Fast PWM Mode wth 8-bit resolution
+	ldi		R16,		(0b01 << WGM00)|(0b10 << COM0B0);	WGM3:0	=	0x05	- Fast PWM Mode wth 8-bit resolution
 	out		TCCR0A,		R16
-	ldi		R16,		(0b001 << CS00)|(0b01 << WGM02)
-	out		TCCR0B,		R16
-	ldi		R16,		(0b10 << COM0B0)
-	out		TCCR0A,		R16								;	Non-inverting PWM on pin OCR0B
+	ldi		R16,		(0b001 << CS00)|(0b01 << WGM02)	;	Non-inverting PWM on pin OCR0B
+	out		TCCR0B,		R16							
 	ldi		Scur,		Smin
 	; ADC
 	ldi		R16,		0b10
@@ -65,13 +63,12 @@ init:
 	ldi		R16,		(1 << SM0)
 	out		SMCR,		R16						;	Sleep mode is ADC noise reduction
 
-	sei
-
 set_Speed:
 	out		OCR0BL,		Scur
 
 measure_Start:
 	sbi		ADCSRA,		ADSC
+	sei
 waitForResult:
 	rjmp	waitForResult
 
