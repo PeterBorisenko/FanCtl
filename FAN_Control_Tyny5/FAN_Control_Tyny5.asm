@@ -34,10 +34,12 @@
 	.org $0000
 		rjmp init ; Reset vector
 	.org ADCCaddr
-		rjmp wake ; ADC vector
+		rjmp get_Result ; ADC vector
 
 ;=====================================
 init:
+	; Clock
+
 	; Memory
 	ldi		R16,		(RAMEND&0xFF)					; Set stackptr to ram end
 	out		SPL,		R16
@@ -52,6 +54,8 @@ init:
 	out		TCCR0A,		R16
 	ldi		R16,		(0b001 << CS00)|(0b01 << WGM02)
 	out		TCCR0B,		R16
+	ldi		R16,		(0b10 << COM0B0)
+	out		TCCR0A,		R16								;	Non-inverting PWM on pin OCR0B
 	ldi		Scur,		Smin
 	; ADC
 	ldi		R16,		0b10
@@ -68,20 +72,11 @@ set_Speed:
 
 measure_Start:
 	sbi		ADCSRA,		ADSC
-	in		R16,		SMCR
-	ori		R16,		(1 << SE)
-	out		SMCR,		R16
-	sleep
-	nop						; waiting for sleep
-
 waitForResult:
-	in		R16,		ADCSRA
-	sbrs	R16,		ADIF
 	rjmp	waitForResult
-	;; in		ADCresult,	ADCL -- optimised
 
-wake:
-	sbi		ADCSRA,		ADIF
+get_Result:
+	;sbi		ADCSRA,		ADIF	--	optimised
 	in		R16,		SMCR
 	cbr		R16,		SE
 	out		SMCR,		R16
