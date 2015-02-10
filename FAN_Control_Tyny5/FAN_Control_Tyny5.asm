@@ -12,6 +12,9 @@
 	.def		Tprev=		R19			;; Previous temperature
 	.def		Scur=		R20			;; Current fan speed
 	.def		Stat=		R21			;; Flag: 0x00 - Idle, 0x01 - Cooling
+	.equ		IDLE=		0x00
+	.equ		WORKING=	0x01
+	.equ		OVERHEAT=	0x02
 	.equ		Load=		PINB0
 	.equ		Fan=		PINB1
 	.equ		Thrm=		PINB2
@@ -23,12 +26,12 @@
 .CSEG
 
 ;=====================================	CONSTANTS
-	.equ		Smin=	10		
+	.equ		Smin=	0		
 	.equ		Smax=	240		
 	.equ		Step=	0x0F
 								;;	ADC values with thermistor NTCLG100E2104/104, R4= 10K
 	.equ		Tmin=	40		;; ADC value at t= 40C
-	.equ		Tmax=	152		;; ADC value at t= 100C
+	;.equ		Tmax=	152		;; ADC value at t= 100C
 
 ;=====================================	INTERRUPTS
 	.org $0000
@@ -67,6 +70,7 @@ set_Speed:
 	out		OCR0BL,		Scur
 
 measure_Start:
+	clc
 	sbi		ADCSRA,		ADSC
 	sei
 waitForResult:
@@ -83,12 +87,13 @@ get_Result:
 calculation:
 	mov		Tprev,		Tcur
 	mov		Tcur,		ADCresult
-	sbrc	Stat,		0x01
+	sbrc	Stat,		WORKING
 	rjmp	comprasion_2
+	sbrc	Stat,		OVERHEAT
+	rjmp	comprasion_3
 	;; rjmp		comprasion_1 -- optimised
 
 comprasion_1:
-	sbi		PORTB,		Load
 	ldi		R16,		Tmin
 	cp		R16,		Tcur
 	brlo	speed_Up		; if Tmin < Tcur
@@ -103,6 +108,12 @@ comprasion_2:
 	;; else
 	rjmp		measure_Start
 
+comprasion_3:
+	ldi		R16,		Tmin
+	cp		Tcur,		R16
+	brlo	load_on
+	rjmp	measure_Start
+
 test_Smin:
 	mov		R16,		Scur
 	cpi		R16,		Smin
@@ -113,14 +124,18 @@ test_Smax:
 	clc
 	mov		R16,		Scur
 	cpi		R16,		Smax
-	brsh	OVERHEAT
+	brsh	load_Off
 	
 speed_Up:
 	clc
-	ldi		Stat,		0x01
+	ldi		Stat,		WORKING
 	ldi		R16,		Step
 	add		Scur,		R16
 	rjmp	set_Speed
+
+load_on:
+	ldi		Stat,		WORKING
+	sbi		PORTB,		Load								; Load On
 
 speed_Down:
 	clc
@@ -129,11 +144,12 @@ speed_Down:
 	rjmp	test_Smin
 
 set_measure_low:
-	ldi		Stat,		0x00
+	ldi		Stat,		IDLE
 	rjmp	measure_Start
 
-OVERHEAT:
+load_Off:
 	;; Load disconnect or LED on
-	cbi		PORTB, Load
+	cbi		PORTB,		Load								; LOAD OFF
+	ldi		Stat,		OVERHEAT							; Change state to Overheat
 	rjmp	measure_Start
 
