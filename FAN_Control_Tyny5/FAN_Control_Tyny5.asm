@@ -53,9 +53,9 @@ init:
 	sbi		DDRB,		Load							;	PB0	-	is output
 	cbi		DDRB,		Thrm							;	ADC2 - is input
 	; Timer
-	ldi		R16,		(0b01 << WGM00)|(0b10 << COM0B0);	WGM3:0	=	0x05	- Fast PWM Mode wth 8-bit resolution
+	ldi		R16,		(0b01 << WGM00)|(0b11 << COM0B0);	WGM3:0	=	0x05	- Fast PWM Mode wth 8-bit resolution
 	out		TCCR0A,		R16
-	ldi		R16,		(0b001 << CS00)|(0b01 << WGM02)	;	Non-inverting PWM on pin OCR0B
+	ldi		R16,		(0b001 << CS00)|(0b01 << WGM02)	;	Inverting PWM on pin OCR0B (because the FAN works that way)
 	out		TCCR0B,		R16							
 	ldi		Scur,		Smin
 	; ADC
